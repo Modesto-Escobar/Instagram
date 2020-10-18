@@ -7,10 +7,10 @@ library(tweetCoin)
 library(readxl)
 
 
-load("~/Trabajo/Proyectos/Coincidencias/Instagram/TrumpNetwork-M.RData")
+load("TrumpNetwork-M.RData")
 
 
-C <- netCoin(nodesf,adjmat,name="ID",image="image",dir="d:/Instagram", repulsion=15, zoom=0.2,
+C <- netCoin(nodesf,adjmat,name="ID",image="image", repulsion=15, zoom=0.2,
              main="Trump's Instagram (Similar people)")
 
 
@@ -43,13 +43,11 @@ M  <- merge(E[,fields], nodesf[, field], by="name", all.x=TRUE)
 H$nodes <- merge(H$nodes[,1:2], M, by="name", all.x=TRUE)
 H$links <- H$links[H$links$Haberman>=sqrt(nrow(j)),]
 g <- netCoin(H, degreeFilter = 1, image="image", ntext="url", zoom=0.6, repulsion=5, main= "Trump's Instagram (Equal labels without Font, Text, Line, Photo)")
-plot(g, dir="D:/Instagram")
+
 
 I$nodes <- merge(I$nodes[,1:2], M, by="name", all.x=TRUE)
 I$links <- I$links[I$links$Haberman>=sqrt(nrow(k)),]
 G <- netCoin(I, degreeFilter = 1, image="image", ntext="url", zoom=0.6, repulsion=5, main= "Trump's Instagram (Equal labels)")
-plot(G, dir="D:/Instagram")
-
 
 
 dico <- function(vector, umbral=.5, top=1, bottom=0, na=0) {
@@ -62,9 +60,9 @@ S <- H$nodes
 S[,field[-(1:2)]] <- sapply(S[,field[-(1:2)]], dico, top="YES", bottom="NO", na="NO")
 others <- cc("adult, violence, racy, spoof, medical")
 W<- surScat(S,variables=c(field, others, "date", "comment_count", "like_count", "image"), active=c(field[-1], others), nclusters = 2:6,
-            image="image", dir="d:/Instagram/surScat", main="Trump's Instagram (Scattergram)")
+            image="image", main="Trump's Instagram (Scattergram)")
 
-multigraphCreate("Similar people"=C, "Equal labels (max)"=G, "Equal labels (min)"=g,  "Scattergram"=W, dir="d:/Instagram")
+multigraphCreate("Similar people"=C, "Equal labels (max)"=G, "Equal labels (min)"=g,  "Scattergram"=W, dir="./html")
 
 
 

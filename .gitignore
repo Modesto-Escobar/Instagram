@@ -41,3 +41,4 @@ vignettes/*.pdf
 # netCoin Outputs
 temp/
 MultiGraph/
+html/
