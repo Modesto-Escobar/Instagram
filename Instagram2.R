@@ -7,13 +7,53 @@ library(tweetCoin)
 library(readxl)
 
 
-load("TrumpNetwork-M.RData")
 
+### Image data processing
+# Generate Network
+load("imageAnalysisResult.RData")
+library(dplyr)
+resultimages <- data.frame(ID=resultdf$ID,resultdf$attributes,resultdf$attributes$gender)
+sumtable3 <- (resultimages %>% group_by(ID) %>% summarise(num=n(),young=sum(age<30)/n(),senior=sum(age>55)/n(),black=sum(black>0.7)/n(),white=sum(white>0.7)/n(), hispanic=sum(hispanic>0.7)/n(), asian=sum(asian>0.8)/n(),female=sum(femaleConfidence)/n()))
+dfsum <- as.data.frame(sumtable3)
+rownames(dfsum) <- dfsum$ID
 
-C <- netCoin(nodesf,adjmat,name="ID",image="image", repulsion=15, zoom=0.2,
+#dfsumfilt <- dfsum[!(dfsum$num==1 | dfsum$num > 10),]
+dfsumfilt <- dfsum[!(dfsum$num==1 & dfsum$white>0.9) | dfsum$num > 10,]
+
+cordf <- cor(t(dfsumfilt[,-(c(1,2,6))]),method="spearman")
+
+diag(cordf) <- 0
+cordf[cordf<0.9] <- 0
+
+rankcor <- apply(1-cordf,2,rank,ties.method="random")
+
+cordf[rankcor>10] <- 0
+
+# Represent correlations
+library(reshape2)
+adjmat <- melt(cordf)
+
+adjmat <- adjmat[adjmat[,1]<adjmat[,2],]
+#adjmat <- adjmat[adjmat$value>0.9999,]
+adjmat <- adjmat[adjmat$value>0.9,]
+
+nodesinnet <- as.vector(unique(c(adjmat[,1],adjmat[,2])))
+nodesf <- as.data.frame(sumtable3[sumtable3$ID %in% nodesinnet,])
+
+nodesf$image <- paste0('imageslow/',nodesf$ID,".jpg")
+nodesf$info <- paste0("<img src='http://atena.usal.es/images/",nodesf$ID,".jpg' style='width:100%'/>")
+colnames(adjmat) <- c("Source","Target","value")
+
+#save(nodesf,adjmat,resultimages,file="TrumpNetWork-M2.RData")
+#load("TrumpNetWork-M2.RData")
+C <- netCoin(nodesf,adjmat,name="ID",image="image", info="info", repulsion=15, zoom=0.2,
              main="Trump's Instagram (Similar people)")
 
 
+
+
+
+### Instagram Data processing
 D <- read_excel("Donald Trump Instagram Sept-2020 Clean.xlsx")
 L <- dichotomize(D, "labels_txt", sep=", ", add=FALSE, sort=TRUE)
 I <- as.data.frame(t(as.matrix(L)))
