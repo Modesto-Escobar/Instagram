@@ -10,6 +10,7 @@ library(readxl)
 
 ### Image data processing
 # Generate Network
+# setwd("~/Trabajo/Proyectos/Coincidencias/Instagram") #Only for my computer
 load("imageAnalysisResult.RData")
 library(dplyr)
 resultimages <- data.frame(ID=resultdf$ID,resultdf$attributes,resultdf$attributes$gender)
@@ -99,10 +100,31 @@ dico <- function(vector, umbral=.5, top=1, bottom=0, na=0) {
 S <- H$nodes
 S[,field[-(1:2)]] <- sapply(S[,field[-(1:2)]], dico, top="YES", bottom="NO", na="NO")
 others <- cc("adult, violence, racy, spoof, medical")
-W<- surScat(S,variables=c(field, others, "date", "comment_count", "like_count", "image"), active=c(field[-1], others), nclusters = 2:6,
+W <- surScat(S,variables=c(field, others, "date", "comment_count", "like_count", "image"), active=c(field[-1], others), nclusters = 2:6,
             image="image", main="Trump's Instagram (Scattergram)")
 
-multigraphCreate("Similar people"=C, "Equal labels (max)"=G, "Equal labels (min)"=g,  "Scattergram"=W, dir="./html")
+tl <- d_cotext(E,"labels_txt", sep="|", min=2, criteria="z", maxL=.001, support=5, interval=3600*24*365.25, 
+               main="Trump's labels in Instagram by year", dir="d:/temp")
+
+beginDate <- min(E$date); endDate <- max(E$date)
+limits <- as.POSIXct(c("2015-12-31T23:59:59Z", "2016-12-31T23:59:59Z", "2019-12-31T23:59:59Z"), tz="")
+serie <- c(beginDate, limits, endDate)
+
+pl <- d_cotext(E,"labels_txt", sep="|", min=2, criteria="z", maxL=.001, support=5, limits= limits, 
+               main="Trump's labels in Instagram by period", dir="d:/temp2")
+
+MH <- data.frame(date=D$date, author="Trump", text = gsub("[|]","", paste0(D$caption_mentions,", ",D$caption_hashtags)))
+mh1 <-d_cotweet(MH, fields=NULL, interval=3600*24*365.25, dir="d:/temp3")
+mh2 <-d_cotweet(MH, fields=NULL, limits=limits, dir="d:/temp4")
+
+m1 <- d_mention(MH, fields=NULL, interval=3600*24*365.25, repulsion=20, zoom=1.5, dir="d:/temp5", imagedir="profilePics", ext="jpg", 
+                main="Trump's mention in Instagram")
+m2 <- d_mention(MH, fields=NULL, limits=limits, repulsion=13, zoom=1.5, dir="d:/temp6", imagedir="profilePics", ext="jpg", 
+                main="Trump's mention in Instagram")
+
+multigraphCreate("Similar people"=C, "Equal labels (max)"=G, "Equal labels (min)"=g,  "Scattergram"=W, "Dynamic"="d:/temp", "Periods"="d:/temp2",
+                 "Mentions and hashtags (d)"="d:/temp3", "Mentions and hashtags (p)"="d:/temp4", "Mentions (d)"="d:/temp5", "Mentions (p)"="d:/temp6",
+                 dir="d:/instagram")
 
 
 
